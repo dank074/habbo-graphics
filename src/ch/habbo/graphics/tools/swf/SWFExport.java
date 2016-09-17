@@ -1,5 +1,6 @@
 package ch.habbo.graphics.tools.swf;
 
+import ch.habbo.graphics.furnitures.collections.ItemCollection;
 import ch.habbo.graphics.tools.DataExtractor;
 import com.jpexs.decompiler.flash.AbortRetryIgnoreHandler;
 import com.jpexs.decompiler.flash.EventListener;
@@ -7,51 +8,18 @@ import com.jpexs.decompiler.flash.ReadOnlyTagList;
 import com.jpexs.decompiler.flash.SWF;
 import com.jpexs.decompiler.flash.SWFSourceInfo;
 import com.jpexs.decompiler.flash.SwfOpenException;
-import com.jpexs.decompiler.flash.abc.ScriptPack;
 import com.jpexs.decompiler.flash.configuration.Configuration;
 import com.jpexs.decompiler.flash.exporters.BinaryDataExporter;
-import com.jpexs.decompiler.flash.exporters.FontExporter;
-import com.jpexs.decompiler.flash.exporters.FrameExporter;
 import com.jpexs.decompiler.flash.exporters.ImageExporter;
-import com.jpexs.decompiler.flash.exporters.MorphShapeExporter;
-import com.jpexs.decompiler.flash.exporters.MovieExporter;
-import com.jpexs.decompiler.flash.exporters.ShapeExporter;
-import com.jpexs.decompiler.flash.exporters.SoundExporter;
-import com.jpexs.decompiler.flash.exporters.TextExporter;
 import com.jpexs.decompiler.flash.exporters.modes.BinaryDataExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.ButtonExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.FontExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.FrameExportMode;
 import com.jpexs.decompiler.flash.exporters.modes.ImageExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.MorphShapeExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.MovieExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.ScriptExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.ShapeExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.SoundExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.SpriteExportMode;
-import com.jpexs.decompiler.flash.exporters.modes.TextExportMode;
 import com.jpexs.decompiler.flash.exporters.settings.BinaryDataExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.ButtonExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.FontExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.FrameExportSettings;
 import com.jpexs.decompiler.flash.exporters.settings.ImageExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.MorphShapeExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.MovieExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.ScriptExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.ShapeExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.SoundExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.SpriteExportSettings;
-import com.jpexs.decompiler.flash.exporters.settings.TextExportSettings;
-import com.jpexs.decompiler.flash.helpers.FileTextWriter;
-import com.jpexs.decompiler.flash.tags.DefineSpriteTag;
 import com.jpexs.decompiler.flash.tags.Tag;
-import com.jpexs.decompiler.flash.tags.base.ButtonTag;
 import com.jpexs.decompiler.flash.tags.base.CharacterIdTag;
-import com.jpexs.decompiler.flash.tags.base.CharacterTag;
 import com.jpexs.decompiler.flash.treeitems.SWFList;
 import com.jpexs.helpers.CancellableWorker;
 import com.jpexs.helpers.Path;
-import com.jpexs.helpers.stat.StatisticData;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -62,19 +30,19 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
+import javax.imageio.ImageIO;
 import org.json.JSONObject;
 
 public class SWFExport {
     
     private String stdOut = null;
     private String stdErr = null;
-    
+    private ImageExporter imageExporter;
+    private BinaryDataExporter binaryExporter;
     public SWFExport(){
+        imageExporter = new ImageExporter();
+        binaryExporter = new BinaryDataExporter();
     }
     
     public void exportClothes(String inputBase, String outputBase, String figureDataDirectory) throws Exception, IOException{
@@ -95,87 +63,59 @@ public class SWFExport {
         for(String f : files){
             if(!Files.exists(Paths.get(inputBase.replace("{filename}", f)))){
                 System.err.println("File " + f + " does not exist.");
-                return;
+                continue;
             }
             if(!Files.exists(Paths.get(outputBase.replace("{filename}", f)))){
                 Files.createDirectories(Paths.get(outputBase.replace("{filename}", f)));
             }
             System.out.println("Exporting  " + f);
-            this.export(inputBase.replace("{filename}", f), outputBase.replace("{filename}", f), "image,binarydata", new HashMap<>());
+            boolean b = this.export(inputBase.replace("{filename}", f), outputBase.replace("{filename}", f));
         }
-        
-        //sadly I have to do this because I don't know where the SWF Extractor sets the 1_ 2_ etc... :(
-        for(String f : files){
-            Files.walk(Paths.get(outputBase.replace("{filename}", f))).forEach((path) -> {
-                
-                if (Files.isRegularFile(path)) {
-                    try{
-                        Integer.parseInt(path.toFile().getName().split("_")[0]);
-                        
-                        String newName = path.toFile().getName().replace(path.toFile().getName().split("_")[0] + "_", "").replace(".bin", ".xml");
-                        path.toFile().renameTo(new File(path.toFile().getPath().replace(path.toFile().getName(), newName)));
-                        System.out.println(newName);
-                    }catch(Exception ex){}
-                }
-            });
-        }
+        //this.fileWalker(files, outputBase);
     }
     
-    public void exportFurnis(String inputBase, String outputBase, String furniDataDirectory){
+    public void exportFurnis(String inputBase, String outputBase, ItemCollection items) throws Exception{
+        ImageIO.setUseCache(false);
         List<String> files = new ArrayList();
+        items.getFloorItems().stream().filter((item) -> (!files.contains(item.getClassName().split("[*]")[0]))).forEach((item) -> {
+            files.add(item.getClassName().split("[*]")[0]);
+        });
         
+        items.getWallItems().stream().filter((item) -> (!files.contains(item.getClassName().split("[*]")[0]))).forEach((item) -> {
+            files.add(item.getClassName().split("[*]")[0]);
+        });
+        for(String f : files){
+            if(!Files.exists(Paths.get(inputBase.replace("{filename}", f)))){
+                System.err.println("File " + f + " does not exist.");
+                continue;
+            }
+            if(Files.exists(Paths.get(outputBase.replace("{filename}", f)))){
+                continue;
+            }
+            Files.createDirectories(Paths.get(outputBase.replace("{filename}", f)));
+            System.out.println("Exporting  " + f);
+            boolean b = this.export(inputBase.replace("{filename}", f), outputBase.replace("{filename}", f));
+        }
+        this.fileWalker(files, outputBase);
+        System.gc();
     }
     
     /**
      * This method was taken from the JPEXS-Decompiler! Exports things from the swf to the destination Directory
-     * @param fileName File Name (example: "hair_F_braidbun.swf")
+     * @param fileName File Name (example: "/swfs/hair_F_braidbun.swf")
      * @param output Output Directory (example "/avatar/assets/hair_F_braidbun/")
      * @param format Which things should be exported (example: "all" or "image,binarydata,script")
      * @param formats can be an empty HashMap
      */
-    private void export(String fileName, String output, String format, Map<String, String> formats) {
-        Selection selection = new Selection();
+    private boolean export(String fileName, String output) {
         Selection selectionIds = new Selection();
-        List<String> selectionClasses = null;
-        double zoom = 1;
-        Level traceLevel = Level.WARNING;
-        String[] validExportItems = new String[]{
-            "script",
-            "script_as2",
-            "script_as3",
-            "image",
-            "shape",
-            "morphshape",
-            "movie",
-            "font",
-            "frame",
-            "sprite",
-            "button",
-            "sound",
-            "binarydata",
-            "text",
-            "all",
-            "fla",
-            "xfl"
-        };
-        String[] removedExportFormats = new String[]{
-            "as", "pcode", "hex", "pcodehex", "all_as", "all_pcode", "all_pcodehex", "all_hex", "textplain"
-        };
-        String exportFormatString = format;
-        List<String> exportFormats = Arrays.asList(exportFormatString.split(","));
         File outDirBase = new File(output);
         File inFileOrFolder = new File(fileName);
         if (!inFileOrFolder.exists()) {
             System.err.println("Input SWF file does not exist!");
-            return;
+            return false;
         }
         AbortRetryIgnoreHandler handler = new ConsoleAbortRetryIgnoreHandler(0,0);
-        boolean exportOK = true;
-        List<String> as3classes = new ArrayList<>();
-        if (selectionClasses != null) {
-            as3classes.addAll(selectionClasses);
-        }
-        Map<String, StatisticData> stat = new HashMap<>();
         try {
             File[] inFiles;
             boolean singleFile = true;
@@ -223,123 +163,20 @@ public class SWFExport {
                         extags.add(t);
                     }
                 }
-                final Level level = traceLevel;
-                for (String exportFormat : exportFormats) {
-                    if (Arrays.asList(removedExportFormats).contains(exportFormat)) {
-                        System.err.println("Error: Export format : " + exportFormat + " was REMOVED. Run application with --help parameter to see available formats.");
-                        return;
-                    } else if (!Arrays.asList(validExportItems).contains(exportFormat)) {
-                        System.err.println("Invalid export item:" + exportFormat);
-                        return;
-                    }
-                }
 
-                boolean exportAll = exportFormats.contains("all");
-                boolean multipleExportTypes = false;
                 EventListener evl = swf.getExportEventListener();
-
-                if (exportAll || exportFormats.contains("image")) {
-                    new ImageExporter().exportImages(handler, outDir + (multipleExportTypes ? File.separator + ImageExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new ImageExportSettings(enumFromStr(formats.get("image"), ImageExportMode.class)), evl);
-                }
-
-                if (exportAll || exportFormats.contains("shape")) {
-                    new ShapeExporter().exportShapes(handler, outDir + (multipleExportTypes ? File.separator + ShapeExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new ShapeExportSettings(enumFromStr(formats.get("shape"), ShapeExportMode.class), zoom), evl);
-                }
-
-                if (exportAll || exportFormats.contains("morphshape")) {
-                    new MorphShapeExporter().exportMorphShapes(handler, outDir + (multipleExportTypes ? File.separator + MorphShapeExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new MorphShapeExportSettings(enumFromStr(formats.get("morphshape"), MorphShapeExportMode.class), zoom), evl);
-                }
-
-                if (exportAll || exportFormats.contains("movie")) {
-                    new MovieExporter().exportMovies(handler, outDir + (multipleExportTypes ? File.separator + MovieExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new MovieExportSettings(enumFromStr(formats.get("movie"), MovieExportMode.class)), evl);
-                }
-
-                if (exportAll || exportFormats.contains("font")) {
-                    new FontExporter().exportFonts(handler, outDir + (multipleExportTypes ? File.separator + FontExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new FontExportSettings(enumFromStr(formats.get("font"), FontExportMode.class)), evl);
-                }
-
-                if (exportAll || exportFormats.contains("sound")) {
-                    new SoundExporter().exportSounds(handler, outDir + (multipleExportTypes ? File.separator + SoundExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new SoundExportSettings(enumFromStr(formats.get("sound"), SoundExportMode.class)), evl);
-                }
-
-                if (exportAll || exportFormats.contains("binarydata")) {
-                    new BinaryDataExporter().exportBinaryData(handler, outDir + (multipleExportTypes ? File.separator + BinaryDataExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new BinaryDataExportSettings(enumFromStr(formats.get("binarydata"), BinaryDataExportMode.class)), evl);
-                }
-
-                if (exportAll || exportFormats.contains("text")) {
-                    Boolean singleTextFile = parseBooleanConfigValue(formats.get("singletext"));
-                    if (singleTextFile == null) {
-                        singleTextFile = Configuration.textExportSingleFile.get();
-                    }
-                    new TextExporter().exportTexts(handler, outDir + (multipleExportTypes ? File.separator + TextExportSettings.EXPORT_FOLDER_NAME : ""), new ReadOnlyTagList(extags), new TextExportSettings(enumFromStr(formats.get("text"), TextExportMode.class), singleTextFile, zoom), evl);
-                }
-
-                FrameExporter frameExporter = new FrameExporter();
-
-                if (exportAll || exportFormats.contains("frame")) {
-                    List<Integer> frames = new ArrayList<>();
-                    for (int i = 0; i < swf.frameCount; i++) {
-                        if (selection.contains(i + 1)) {
-                            frames.add(i);
-                        }
-                    }
-                    FrameExportSettings fes = new FrameExportSettings(enumFromStr(formats.get("frame"), FrameExportMode.class), zoom);
-                    frameExporter.exportFrames(handler, outDir + (multipleExportTypes ? File.separator + FrameExportSettings.EXPORT_FOLDER_NAME : ""), swf, 0, frames, fes, evl);
-                }
-
-                if (exportAll || exportFormats.contains("sprite")) {
-                    SpriteExportSettings ses = new SpriteExportSettings(enumFromStr(formats.get("sprite"), SpriteExportMode.class), zoom);
-                    for (CharacterTag c : swf.getCharacters().values()) {
-                        if (c instanceof DefineSpriteTag) {
-                            frameExporter.exportFrames(handler, outDir + (multipleExportTypes ? File.separator + SpriteExportSettings.EXPORT_FOLDER_NAME : ""), swf, c.getCharacterId(), null, ses, evl);
-                        }
-                    }
-                }
-
-                if (exportAll || exportFormats.contains("button")) {
-                    ButtonExportSettings bes = new ButtonExportSettings(enumFromStr(formats.get("button"), ButtonExportMode.class), zoom);
-                    for (CharacterTag c : swf.getCharacters().values()) {
-                        if (c instanceof ButtonTag) {
-                            List<Integer> frameNums = new ArrayList<>();
-                            frameNums.add(0); // todo: export all frames
-                            frameExporter.exportFrames(handler, outDir + (multipleExportTypes ? File.separator + ButtonExportSettings.EXPORT_FOLDER_NAME : ""), swf, c.getCharacterId(), frameNums, bes, evl);
-                        }
-                    }
-                }
-
-                boolean parallel = Configuration.parallelSpeedUp.get();
-                Boolean singleScriptFile = parseBooleanConfigValue(formats.get("singlescript"));
-                if (singleScriptFile == null) {
-                    singleScriptFile = Configuration.scriptExportSingleFile.get();
-                }
-
-                if (parallel && singleScriptFile) {
-                    System.out.println("export.script.singleFilePallelModeWarning");
-                    singleScriptFile = false;
-                }
-
-                ScriptExportSettings scriptExportSettings = new ScriptExportSettings(enumFromStr(formats.get("script"), ScriptExportMode.class), singleScriptFile);
-                boolean exportAllScript = exportAll || exportFormats.contains("script");
-                boolean exportAs2Script = exportAllScript || exportFormats.contains("script_as2");
-                boolean exportAs3Script = exportAllScript || exportFormats.contains("script_as3");
-                if (exportAs2Script || exportAs3Script) {
-                    String scriptsFolder = Path.combine(outDir, ScriptExportSettings.EXPORT_FOLDER_NAME);
-                    Path.createDirectorySafe(new File(scriptsFolder));
-                    String singleFileName = Path.combine(scriptsFolder, swf.getShortFileName() + scriptExportSettings.getFileExtension());
-                    try (FileTextWriter writer = scriptExportSettings.singleFile ? new FileTextWriter(Configuration.getCodeFormatting(), new FileOutputStream(singleFileName)) : null) {
-                        scriptExportSettings.singleFileWriter = writer;
-                        List<ScriptPack> as3packs = as3classes.isEmpty() ? null : swf.getScriptPacksByClassNames(as3classes);
-                        exportOK = swf.exportActionScript(handler, scriptsFolder, as3classes.isEmpty() ? null : as3packs, scriptExportSettings, parallel, evl, exportAs2Script, exportAs3Script) != null && exportOK;
-                    }
-                }
-
+                imageExporter.exportImages(handler, outDir, new ReadOnlyTagList(extags), new ImageExportSettings(ImageExportMode.PNG_GIF_JPEG), evl);
+                binaryExporter.exportBinaryData(handler, outDir , new ReadOnlyTagList(extags), new BinaryDataExportSettings(BinaryDataExportMode.RAW), evl);
                 swf.clearAllCache();
+                swf = null;
+                inFile = null;
                 CancellableWorker.cancelBackgroundThreads();
             }
         } catch (OutOfMemoryError | Exception ex) {
             
             System.err.print("FAIL: Exporting Failed on Exception - ");
         }
+        return true;
     }
     
     private FilenameFilter getSwfFilter() {
@@ -373,6 +210,30 @@ public class SWFExport {
             bValue = true;
         }
         return bValue;
+    }
+    
+    /**
+     * Sadly I have to do this like this because the SWF Decompiler export things like this : 0_file1 1_file2 2_file3
+     * @param files 
+     */
+    private void fileWalker(List<String> files, String outputBase) throws Exception{
+        for(String f : files){
+            if(!Files.exists(Paths.get(outputBase.replace("{filename}", f)))){
+                continue;
+            }
+            Files.walk(Paths.get(outputBase.replace("{filename}", f))).forEach((path) -> {
+                
+                if (Files.isRegularFile(path)) {
+                    try{
+                        String beginSeq = path.toFile().getName().split("_")[0];
+                        Integer.parseInt(path.toFile().getName().split("_")[0]);
+                        String newName = path.toFile().getName().substring(beginSeq.length() + 1).replace(".bin", ".xml");
+                        path.toFile().renameTo(new File(path.toFile().getPath().replace(path.toFile().getName(), newName)));
+                        System.out.println(newName);
+                    }catch(Exception ex){}
+                }
+            });
+        }
     }
     
     private class Selection {

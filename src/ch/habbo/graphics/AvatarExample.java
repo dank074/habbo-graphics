@@ -3,7 +3,6 @@ package ch.habbo.graphics;
 import ch.habbo.graphics.avatar.AvatarImage;
 import ch.habbo.graphics.avatar.AvatarRenderType;
 import ch.habbo.graphics.avatar.collections.AvatarCollections;
-import ch.habbo.graphics.furnitures.collections.Parser;
 import ch.habbo.graphics.tools.DataExtractor;
 import ch.habbo.graphics.tools.swf.SWFExport;
 import java.io.File;
@@ -11,13 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import javax.imageio.ImageIO;
 
-public class Example {
-    public static void main(String[] args) throws Exception{
-        
-        //Parser p = new Parser();
-       // p.parseFurniData(Paths.get("xml", "furnidata.xml"));
-        //DataExtractor Example
-        
+public class AvatarExample {
+    public static void main1(String[] args) throws Exception{
         DataExtractor extractor = new DataExtractor("xml");
         String jsonFolder = "avatar/json";
         if(!Files.exists(Paths.get(jsonFolder))){
@@ -29,8 +23,8 @@ public class Example {
         Files.write(Paths.get(jsonFolder, "avatar_parts.json"), extractor.getLibraries().toString().getBytes());
         
         //SWFExport Example
-       SWFExport export = new SWFExport();
-       export.exportClothes("swfs/{filename}.swf","avatar/assets/{filename}","xml");
+        SWFExport export = new SWFExport();
+        export.exportClothes("swfs/{filename}.swf","avatar/assets/{filename}","xml");
         
         //Avatar Render Example
         

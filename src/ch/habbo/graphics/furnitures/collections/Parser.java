@@ -22,16 +22,19 @@ public class Parser {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder dbu = dbf.newDocumentBuilder();
         dom = dbu.parse(furniData.toString());
-        Element floorItemsElement = (Element)dom.getDocumentElement().getElementsByTagName("wallitemtypes").item(0);
+        Element floorItemsElement = (Element)dom.getDocumentElement().getElementsByTagName("roomitemtypes").item(0);
         NodeList fItem = floorItemsElement.getElementsByTagName("furnitype");
         for(int i = 0 ; i < fItem.getLength();i++) {
             Element roomItem = (Element)fItem.item(i);
             List<String> clrs = new ArrayList();
-            NodeList colors = ((Element)roomItem.getElementsByTagName("partcolors").item(0)).getElementsByTagName("color");
-            for(int i2 = 0; i2 < colors.getLength(); i2++){
-                Element c = (Element)colors.item(i2);
-                clrs.add(c.getTextContent());
+            if(roomItem.getElementsByTagName("partcolors").getLength() != 0){
+                NodeList colors = ((Element)roomItem.getElementsByTagName("partcolors").item(0)).getElementsByTagName("color");
+                for(int i2 = 0; i2 < colors.getLength(); i2++){
+                    Element c = (Element)colors.item(i2);
+                    clrs.add(c.getTextContent());
+                }
             }
+            System.out.println(roomItem.getAttribute("classname"));
             result.add(new FloorItem(
                     this.getIntAttribute(roomItem, "id"),
                     roomItem.getAttribute("classname"),
@@ -41,8 +44,9 @@ public class Parser {
                     this.getIntContent(roomItem, "ydim"),
                     clrs
             ));
+            
         }
-        Element wallItemsElement = (Element)dom.getDocumentElement().getElementsByTagName("roomitemtypes").item(0);
+        Element wallItemsElement = (Element)dom.getDocumentElement().getElementsByTagName("wallitemtypes").item(0);
         NodeList wItems = floorItemsElement.getElementsByTagName("furnitype");
         for(int i = 0 ; i < fItem.getLength();i++) {
             Element roomItem = (Element)fItem.item(i);
