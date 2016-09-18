@@ -34,7 +34,6 @@ public class Parser {
                     clrs.add(c.getTextContent());
                 }
             }
-            System.out.println(roomItem.getAttribute("classname"));
             result.add(new FloorItem(
                     this.getIntAttribute(roomItem, "id"),
                     roomItem.getAttribute("classname"),

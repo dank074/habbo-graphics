@@ -1,6 +1,7 @@
 package ch.habbo.graphics.tools;
 
 import ch.habbo.graphics.avatar.Part;
+import ch.habbo.graphics.furnitures.Asset;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -82,5 +83,33 @@ public class ImageTools {
      */
     private static Double colorConvert(int newC, int oldC){
         return ((double)newC / 255) * (double)oldC;
+    }
+    
+    /**
+     * Draws a Furni Part to the "Canvas"
+     * @param image the "canvas"
+     * @param toDraw the image which should be drawn
+     * @param asset Asset contains things like Position
+     */
+    public static void drawPartToImage(BufferedImage image, BufferedImage toDraw, Asset asset){
+        image.createGraphics().drawImage(toDraw,null, Math.abs(asset.getX()),Math.abs(asset.getY()));
+    }
+    
+    /**
+     * Alpha "Mask"
+     * @param image The Image
+     * @param alpha Alpha Mask (0-255)
+     * @return 
+     */
+    public static BufferedImage alphaImage(BufferedImage image, Integer alpha){
+        for(int height = 0; height < image.getHeight(); height++){
+            for(int width = 0; width < image.getWidth(); width++){
+                Color c = new Color(image.getRGB(width, height));
+                if(c.getAlpha() < alpha){
+                    image.setRGB(width, height, new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha() - alpha).getRGB());
+                }
+            }
+        }
+        return image;
     }
 }

@@ -229,7 +229,6 @@ public class SWFExport {
                         Integer.parseInt(path.toFile().getName().split("_")[0]);
                         String newName = path.toFile().getName().substring(beginSeq.length() + 1).replace(".bin", ".xml");
                         path.toFile().renameTo(new File(path.toFile().getPath().replace(path.toFile().getName(), newName)));
-                        System.out.println(newName);
                     }catch(Exception ex){}
                 }
             });
