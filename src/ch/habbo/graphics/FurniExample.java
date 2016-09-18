@@ -17,9 +17,9 @@ public class FurniExample {
         ItemCollection collection = p.parseFurniData(Paths.get(System.getProperty("user.dir"), "xml", "furnidata.xml"));
         SWFExport export = new SWFExport();
         export.exportFurnis("swfs/furniture/{filename}.swf","furni/assets/{filename}", collection);
-        Furniture furni = new Furniture("hblooza14_tent", 0, 0, 0, FurniSize.NORMAL, "furni/assets/{classname}/{classname}_{classname}_{file}.xml", "{classname}_{size}_{part}_{direction}_{frame}", "furni/assets/{classname}/{classname}_{classname}_icon.png", "furni/assets/{classname}/{classname}_{filename}.png");
+        Furniture furni = new Furniture("hblooza14_flag_p", 0, 0, 0, 8, FurniSize.NORMAL, "furni/assets/{classname}/{classname}_{classname}_{file}.xml", "{classname}_{size}_{part}_{direction}_{frame}", "furni/assets/{classname}/{classname}_{classname}_icon", "furni/assets/{classname}/{classname}_{filename}.png");
         furni.render();
-        File outputfile = new File("hblooza14_tent.png");
+        File outputfile = new File("hblooza14_flag_p.png");
         ImageIO.write(furni.getImage(), "png", outputfile);
     }
     

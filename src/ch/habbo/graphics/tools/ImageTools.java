@@ -106,7 +106,7 @@ public class ImageTools {
             for(int width = 0; width < image.getWidth(); width++){
                 Color c = new Color(image.getRGB(width, height));
                 if(c.getAlpha() < alpha){
-                    image.setRGB(width, height, new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha() - alpha).getRGB());
+                    image.setRGB(width, height, new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha).getRGB());
                 }
             }
         }

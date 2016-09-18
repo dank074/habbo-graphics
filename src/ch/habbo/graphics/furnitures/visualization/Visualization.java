@@ -1,9 +1,10 @@
 package ch.habbo.graphics.furnitures.visualization;
 
 import ch.habbo.graphics.furnitures.visualization.animations.Animation;
+import ch.habbo.graphics.furnitures.visualization.animations.colors.ColorLayer;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 public class Visualization {
     
@@ -13,13 +14,16 @@ public class Visualization {
     private final HashMap<Integer, Layer> Layer;
     private final List<Integer> Directions;
     private final List<Animation> Animations;
-    public Visualization(Integer size, Integer layers, Integer angle, HashMap<Integer, Layer> layer, List<Integer> directions, List<Animation> animations){
+    private final List<ColorLayer> Colors;
+    
+    public Visualization(Integer size, Integer layers, Integer angle, HashMap<Integer, Layer> layer, List<Integer> directions, List<Animation> animations, List<ColorLayer> colors){
         this.Size = size;
         this.Layers = layers;
         this.Angle = angle;
         this.Layer = layer;
         this.Directions =  directions;
         this.Animations = animations;
+        this.Colors = colors;
     }
     
     public Integer getSize(){
@@ -53,6 +57,15 @@ public class Visualization {
         for(Animation ani : this.Animations){
             if(ani.getId() == AnimationId){
                 return ani;
+            }
+        }
+        return null;
+    }
+    
+    public Color getColor(int LayerId, int ColorId){
+        for(ColorLayer clayer : this.Colors){
+            if(clayer.getLayerId() == LayerId && clayer.getColorId() == ColorId){
+                return clayer.getColor();
             }
         }
         return null;

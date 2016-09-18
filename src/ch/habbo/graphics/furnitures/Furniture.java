@@ -29,13 +29,14 @@ public class Furniture {
     private Integer Width;
     private Integer Height;
     private final LinkedHashMap<Asset, BufferedImage> Images;
-    
+    private Integer Color;
     /**
      * Constructor
      * @param classname Classname (example: "throne")
      * @param direction Direction (0-7)
      * @param frame Frame number
      * @param animation Animation Id
+     * @param color Color Number (Hex Color is saved in visualization.xml)
      * @param type What should be drawn (ICON / NORMAL / ZOOMOUT -> does only resize the image to the half of normal size)
      * @param xmlBase XML Base (example "furni/assets/{classname}/{classname}_{classname}_{file}.xml")
      * @param fileNameBase File Name base (example "{classname}_{size}_{part}_{direction}_{frame}")
@@ -43,7 +44,7 @@ public class Furniture {
      * @param pngBase Image Base (example "furni/assets/{classname}/{classname}_{filename}.png")
      * @throws Exception If any XML Parsing goes wrong
      */
-    public Furniture(String classname, Integer direction, Integer frame, Integer animation, FurniSize type, String xmlBase, String fileNameBase, String iconBase, String pngBase) throws Exception{
+    public Furniture(String classname, Integer direction, Integer frame, Integer animation, Integer color, FurniSize type, String xmlBase, String fileNameBase, String iconBase, String pngBase) throws Exception{
         this.Classname = classname;
         this.Direction = direction;
         this.Frame = frame;
@@ -59,6 +60,7 @@ public class Furniture {
         this.Height = 0;
         this.Images = new LinkedHashMap<>();
         this.IconBase = iconBase;
+        this.Color = color;
     }
     
     /**
@@ -66,6 +68,7 @@ public class Furniture {
      * @throws Exception When it fails to read / write an Image
      */
     public void render() throws Exception{
+        Visualization visual = this.visualizations.getVisualization(this.DrawType);
         if(this.DrawType == FurniSize.ICON){
             BufferedImage icon = null;
             if(Files.exists(Paths.get(this.IconBase.replace("{classname}", this.Classname) +  ".png"))){
@@ -76,10 +79,12 @@ public class Furniture {
             if(icon == null){
                 throw new Exception("Icon File(s) not found!");
             }
+            if(this.Color != 0 && visual.getColor(0, this.Color) != null){
+                icon = ImageTools.recolorImage(icon, visual.getColor(0, this.Color));
+            }
             this.Image = icon;
             return;
         }
-        Visualization visual = this.visualizations.getVisualization(this.DrawType);
         if(!visual.hasDirection(this.Direction)){
             this.Direction = visual.getDefaultDirection();
         }
@@ -109,6 +114,9 @@ public class Furniture {
             }
             if(visual.getLayer(i) != null && visual.getLayer(i).getAlpha() > 0){
                 partImage = ImageTools.alphaImage(partImage, visual.getLayer(i).getAlpha());
+            }
+            if(this.Color != 0 && visual.getColor(i, this.Color) != null){
+                partImage = ImageTools.recolorImage(partImage, visual.getColor(i, this.Color));
             }
             this.Images.put(asset, partImage);
         }

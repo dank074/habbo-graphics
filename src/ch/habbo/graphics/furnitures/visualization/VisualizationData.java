@@ -2,6 +2,7 @@ package ch.habbo.graphics.furnitures.visualization;
 
 import ch.habbo.graphics.furnitures.FurniSize;
 import ch.habbo.graphics.furnitures.visualization.animations.Animation;
+import ch.habbo.graphics.furnitures.visualization.animations.colors.ColorLayer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,7 @@ public class VisualizationData {
             if(visual.getElementsByTagName("directions").getLength() > 0){
                 NodeList dirs = ((Element)visual.getElementsByTagName("directions").item(0)).getElementsByTagName("direction");
                 for(int j = 0; j < dirs.getLength(); j++){
-                    Element direction = (Element)dirs.item(0);
+                    Element direction = (Element)dirs.item(j);
                     directions.add(Integer.parseInt(direction.getAttribute("id")));
                 }
             }
@@ -47,6 +48,22 @@ public class VisualizationData {
                     animations.add(new Animation(anim));
                 }
             }
+            List<ColorLayer> colors = new ArrayList();
+            if(visual.getElementsByTagName("colors").getLength() > 0){
+                NodeList colorList = ((Element)visual.getElementsByTagName("colors").item(0)).getElementsByTagName("color");
+                for(int j = 0; j < colorList.getLength(); j++){
+                    Element color = (Element)colorList.item(j);
+                    NodeList cLayers = color.getElementsByTagName("colorLayer");
+                    for(int k = 0; k < cLayers.getLength(); k++){
+                        Element colorLayer = (Element)cLayers.item(k);
+                        colors.add(new ColorLayer(
+                                Integer.parseInt(colorLayer.getAttribute("id")),
+                                Integer.parseInt(color.getAttribute("id")),
+                                colorLayer.getAttribute("color")
+                        ));
+                    }
+                }
+            }
             this.visualizations.put(
                     Integer.parseInt(visual.getAttribute("size")), 
                     new Visualization(
@@ -55,7 +72,8 @@ public class VisualizationData {
                             Integer.parseInt(visual.getAttribute("angle")),
                             layers,
                             directions,
-                            animations
+                            animations,
+                            colors
             ));
         }
     }
