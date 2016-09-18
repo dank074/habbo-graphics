@@ -9,7 +9,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import javax.imageio.ImageIO;
 
-
 public class FurniExample {
     
     public static void main(String[] args) throws Exception{
@@ -17,9 +16,9 @@ public class FurniExample {
         ItemCollection collection = p.parseFurniData(Paths.get(System.getProperty("user.dir"), "xml", "furnidata.xml"));
         SWFExport export = new SWFExport();
         export.exportFurnis("swfs/furniture/{filename}.swf","furni/assets/{filename}", collection);
-        Furniture furni = new Furniture("hblooza14_flag_p", 0, 0, 0, 8, FurniSize.NORMAL, "furni/assets/{classname}/{classname}_{classname}_{file}.xml", "{classname}_{size}_{part}_{direction}_{frame}", "furni/assets/{classname}/{classname}_{classname}_icon", "furni/assets/{classname}/{classname}_{filename}.png");
+        Furniture furni = new Furniture("wf_cnd_date_rng_active", 0, 3, 1, 8, FurniSize.NORMAL, "furni/assets/{classname}/{classname}_{classname}_{file}.xml", "{classname}_{size}_{part}_{direction}_{frame}", "furni/assets/{classname}/{classname}_{classname}_icon", "furni/assets/{classname}/{classname}_{filename}.png");
         furni.render();
-        File outputfile = new File("hblooza14_flag_p.png");
+        File outputfile = new File("wf_cnd_date_rng_active.png");
         ImageIO.write(furni.getImage(), "png", outputfile);
     }
     
