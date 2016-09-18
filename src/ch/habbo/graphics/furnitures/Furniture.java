@@ -24,6 +24,7 @@ public class Furniture {
     private BufferedImage Image;
     private final String ImageBase;
     private final String XMLBase;
+    private final String IconBase;
     private final String FileNameBase;
     private Integer Width;
     private Integer Height;
@@ -38,7 +39,7 @@ public class Furniture {
      * @param type What should be drawn (ICON / NORMAL / ZOOMOUT -> does only resize the image to the half of normal size)
      * @param xmlBase XML Base (example "furni/assets/{classname}/{classname}_{classname}_{file}.xml")
      * @param fileNameBase File Name base (example "{classname}_{size}_{part}_{direction}_{frame}")
-     * @param iconBase Icon Base (example "furni/assets/{classname}/{classname}_{classname}_icon.png")
+     * @param iconBase Icon Base (example "furni/assets/{classname}/{classname}_{classname}_icon")
      * @param pngBase Image Base (example "furni/assets/{classname}/{classname}_{filename}.png")
      * @throws Exception If any XML Parsing goes wrong
      */
@@ -57,6 +58,7 @@ public class Furniture {
         this.Width = 0;
         this.Height = 0;
         this.Images = new LinkedHashMap<>();
+        this.IconBase = iconBase;
     }
     
     /**
@@ -64,6 +66,19 @@ public class Furniture {
      * @throws Exception When it fails to read / write an Image
      */
     public void render() throws Exception{
+        if(this.DrawType == FurniSize.ICON){
+            BufferedImage icon = null;
+            if(Files.exists(Paths.get(this.IconBase.replace("{classname}", this.Classname) +  ".png"))){
+                icon = ImageIO.read(new File(this.IconBase.replace("{classname}", this.Classname) + ".png"));
+            }else if(Files.exists(Paths.get(this.IconBase.replace("{classname}", this.Classname) +  "_a.png"))){
+                icon = ImageIO.read(new File(this.IconBase.replace("{classname}", this.Classname) + "_a.png"));
+            }
+            if(icon == null){
+                throw new Exception("Icon File(s) not found!");
+            }
+            this.Image = icon;
+            return;
+        }
         Visualization visual = this.visualizations.getVisualization(this.DrawType);
         if(!visual.hasDirection(this.Direction)){
             this.Direction = visual.getDefaultDirection();
